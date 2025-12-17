@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Oshan Manhas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Icons (outline & minimal) -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Modern font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --text: #0f172a;
+      --subtext: #334155;
+      --muted: #64748b;
+      --accent: #2563eb;
+      --bg: #fbf7f2; /* soft cream */
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont;
+      background: radial-gradient(circle at top, #f5efe6, var(--bg));
+      color: var(--text);
+      min-height: 100svh; /* safer for mobile */
+      overflow-x: hidden;
+    }
+
+    /* subtle animated background */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -20%;
+      background: linear-gradient(120deg, rgba(37,99,235,0.06), rgba(14,165,233,0.05), transparent);
+      animation: floatBg 14s ease-in-out infinite alternate;
+      z-index: -1;
+    }
+
+    @keyframes floatBg {
+      from { transform: translateY(-20px); }
+      to { transform: translateY(20px); }
+    }
+
+    .container {
+      max-width: min(720px, 92vw);
+      text-align: center;
+      padding: clamp(24px, 5vw, 48px) clamp(20px, 4vw, 32px);
+      margin: 0 auto;
+      min-height: 100svh;
+      display: grid;
+      grid-template-rows: 1fr auto auto auto auto 1fr;
+      place-items: center;
+      animation: fadeIn 0.9s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .avatar-wrap {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .avatar {
+      width: clamp(120px, 30vw, 160px);
+      height: clamp(120px, 30vw, 160px);
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 24px;
+      /* softer, modern depth without border */
+      box-shadow:
+        0 12px 30px rgba(0,0,0,0.12),
+        0 40px 80px rgba(0,0,0,0.08);
+      transition: transform 0.4s cubic-bezier(.2,.8,.2,1), box-shadow 0.4s ease;
+    }
+
+    @media (hover: hover) {
+      .avatar:hover {
+        transform: translateY(-8px) scale(1.04);
+        box-shadow:
+          0 20px 45px rgba(0,0,0,0.16),
+          0 60px 120px rgba(0,0,0,0.12);
+      }
+    }
+
+    h1 {
+      font-size: clamp(1.9rem, 4.5vw, 2.6rem);
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.6px;
+    }
+
+    .bio {
+      margin-top: 18px;
+      font-size: clamp(0.95rem, 4vw, 1.05rem);
+      line-height: 1.7;
+      color: var(--subtext);
+      max-width: 60ch;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .socials {
+      margin-top: 32px;
+      display: flex;
+      justify-content: center;
+      gap: clamp(18px, 4vw, 28px);
+      font-size: 1.15rem;
+      flex-wrap: wrap;
+    }
+
+    .socials a {
+      color: var(--text);
+      text-decoration: none;
+      padding: 10px;
+      border-radius: 50%;
+      transition: transform 0.25s ease, background 0.25s ease, color 0.25s ease;
+    }
+
+    .socials a:hover {
+      transform: translateY(-3px);
+      background: rgba(37,99,235,0.08);
+      color: var(--accent);
+    }
+
+    footer {
+      grid-row: 6;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    
+  @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    @media (max-height: 600px) {
+      .container {
+        justify-content: flex-start;
+        padding-top: 6vh;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+
+    <!-- Upload profile.jpg in the same repository -->
+    <div class="avatar-wrap"><img src="profile.jpg" alt="Oshan Manhas" class="avatar"></div>
+
+    <h1>Oshan Manhas</h1>
+
+    <p class="bio">
+      Welcome! I am Oshan Manhas, a final-year B.Tech Computer Science student at GCET Jammu (2022–2026).
+      My academic interests include Data Science, Machine Learning, Computer Networks, and emerging
+      communication technologies. I enjoy building projects and strengthening my technical foundation
+      through continuous learning.
+    </p>
+
+    <div class="socials">
+      <a href="mailto:your@email.com" title="Email"><i class="fa-regular fa-envelope"></i></a>
+      <a href="https://github.com/yourusername" target="_blank" title="GitHub"><i class="fa-brands fa-github"></i></a>
+      <a href="https://linkedin.com/in/yourusername" target="_blank" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+      <a href="#" target="_blank" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
+      <a href="#" target="_blank" title="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+    </div>
+      <footer>
+        © 2026 Oshan Manhas
+      </footer>
+
+  </main>
+</body>
+</html>
