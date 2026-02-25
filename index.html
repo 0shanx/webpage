@@ -72,7 +72,6 @@
       margin: 0 auto;
       min-height: 100svh;
       display: grid;
-      /* Adjusted grid to 7 rows to perfectly center the new projects section */
       grid-template-rows: 1fr auto auto auto auto auto 1fr;
       place-items: center;
       animation: fadeIn 0.9s ease forwards;
@@ -151,11 +150,11 @@
       color: var(--accent);
     }
 
-    /* --- New Projects Section Styles --- */
+    /* --- Projects Section Styles --- */
     .projects-section {
       margin-top: 40px;
       width: 100%;
-      max-width: 380px;
+      max-width: 420px; /* Slightly wider to accommodate longer titles comfortably */
       animation: fadeIn 0.9s ease forwards 0.2s; /* Slight delay to load after bio */
       opacity: 0;
     }
@@ -167,6 +166,12 @@
       letter-spacing: 1.5px;
       margin-bottom: 16px;
       font-weight: 600;
+    }
+
+    .projects-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     .project-card {
@@ -203,6 +208,15 @@
       flex-shrink: 0;
     }
 
+    /* Give a slightly different color to the second project icon to make it distinct */
+    .project-card:nth-child(2) .project-icon {
+      background: rgba(124, 58, 237, 0.08); /* Purple tint matching the GATE app design */
+      color: #7c3aed;
+    }
+    .project-card:nth-child(2):hover {
+      border-color: rgba(124, 58, 237, 0.15);
+    }
+
     .project-info h3 {
       margin: 0;
       font-size: 1.05rem;
@@ -218,11 +232,12 @@
     }
 
     footer {
-      grid-row: 7; /* Shifted down one row to accommodate projects */
+      grid-row: 7;
       text-align: center;
       font-size: 0.8rem;
       color: var(--muted);
       padding-bottom: env(safe-area-inset-bottom);
+      margin-top: 24px;
     }
 
   @media (prefers-reduced-motion: reduce) {
@@ -264,18 +279,34 @@
       <a href="#" target="_blank" title="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
     </div>
 
-    <!-- New Track Analytics Project Link -->
+    <!-- Projects Section -->
     <div class="projects-section">
-      <div class="projects-title">Featured Project</div>
-      <a href="/track" class="project-card">
-        <div class="project-icon">
-          <i class="fa-solid fa-fire-flame-curved"></i>
-        </div>
-        <div class="project-info">
-          <h3>Track Analytics</h3>
-          <p>Full-stack fitness tracking web app with cloud sync.</p>
-        </div>
-      </a>
+      <div class="projects-title">Featured Projects</div>
+      <div class="projects-grid">
+        
+        <!-- Track Analytics Project -->
+        <a href="/track" class="project-card">
+          <div class="project-icon">
+            <i class="fa-solid fa-fire-flame-curved"></i>
+          </div>
+          <div class="project-info">
+            <h3>Track Analytics</h3>
+            <p>Full-stack fitness tracking web app with cloud sync.</p>
+          </div>
+        </a>
+
+        <!-- GATE CSE Tracker Project -->
+        <a href="https://gate-tracker-oshan.vercel.app/" target="_blank" rel="noopener noreferrer" class="project-card">
+          <div class="project-icon">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <div class="project-info">
+            <h3>GATE CSE Tracker</h3>
+            <p>Dynamic syllabus progress tracker with interactive analytics.</p>
+          </div>
+        </a>
+
+      </div>
     </div>
 
     <footer>
