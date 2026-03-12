@@ -215,6 +215,9 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
+// DATA SAFETY LOCK: Prevents overwriting if cloud load fails
+let cloudLoadError = false;
+
 let userId = null; let dataLoaded = false; let allWeeksData = []; let measurements = {}; let measurementHistory = {};
 let currentUnit = localStorage.getItem("eliteUnit") || "metric"; let expansionLevel=0; let currentTab='dashboard'; let openHistoryPanels=new Set();
 const bodyParts=["Chest","R ForeArm","L ForeArm","R Bicep","L Bicep","Belly","Hips","R Thigh","L Thigh","R Calf","L Calf"];
@@ -245,11 +248,25 @@ async function loadDataFromCloud() {
             measurementHistory = JSON.parse(localStorage.getItem("eliteMeasurementHistory")||"{}");
             if(allWeeksData.length > 0) await saveData(); 
         }
-    } catch(e) { showToast("Error loading cloud data"); }
+        cloudLoadError = false; // Successfully loaded
+    } catch(e) { 
+        console.error("FATAL: Cloud Data failed to load. Entering Safe Mode.", e);
+        cloudLoadError = true; // Engage Data Safety Lock
+        showToast("⚠️ Offline Mode: Cloud sync paused to protect data."); 
+    }
 }
 
 async function saveData(){
-    localStorage.setItem("eliteFitnessData",JSON.stringify(allWeeksData)); localStorage.setItem("eliteMeasurements",JSON.stringify(measurements)); localStorage.setItem("eliteMeasurementHistory",JSON.stringify(measurementHistory));
+    if (cloudLoadError) {
+        console.warn("Save blocked by Data Safety Lock");
+        showToast("⚠️ Can't save while database is disconnected.");
+        return;
+    }
+    
+    localStorage.setItem("eliteFitnessData",JSON.stringify(allWeeksData)); 
+    localStorage.setItem("eliteMeasurements",JSON.stringify(measurements)); 
+    localStorage.setItem("eliteMeasurementHistory",JSON.stringify(measurementHistory));
+    
     if(!userId) return;
     try {
         const docRef = doc(db, 'users', userId);
@@ -274,7 +291,16 @@ onAuthStateChanged(auth, async (user) => {
         
         document.getElementById('authScreen').classList.add('opacity-0', 'pointer-events-none');
         setTimeout(() => document.getElementById('authScreen').classList.add('hidden'), 500);
-        if(!dataLoaded) { await loadDataFromCloud(); dataLoaded = true; ensureCurrentWeekExists(); updateAverages(); renderTable(); }
+        
+        if(!dataLoaded) { 
+            await loadDataFromCloud(); 
+            dataLoaded = true; 
+            if (!cloudLoadError) {
+                ensureCurrentWeekExists(); 
+            }
+            updateAverages(); 
+            renderTable(); 
+        }
     } else {
         userId = null; document.getElementById('openSettingsBtnMobile').innerHTML = '⚙️'; document.getElementById('openSettingsBtnDesktop').innerHTML = '⚙️';
         if (document.getElementById('settingsUserArea')) document.getElementById('settingsUserArea').innerHTML = '';
@@ -311,7 +337,13 @@ function compressImage(file, maxSize = 1080) {
     });
 }
 
-function ensureCurrentWeekExists(){while(allWeeksData.length<currentWeek){allWeeksData.push({weights:Array(7).fill(null),avg:null,photo:null})}saveData()}
+function ensureCurrentWeekExists(){
+    if (cloudLoadError) return; // Prevent overwriting memory if disconnected
+    while(allWeeksData.length<currentWeek){
+        allWeeksData.push({weights:Array(7).fill(null),avg:null,photo:null})
+    }
+    saveData()
+}
 
 const chart=new Chart(document.getElementById('chart'),{
     type:'line', data:{ labels:[], datasets:[{ label:'Weekly Avg', data:[], borderWidth:3, tension:.4, pointHitRadius: 35 }, { label:'Trend', data:[], borderDash:[6,6], borderWidth:2, tension:.4, pointHitRadius: 35 }]},
@@ -404,7 +436,7 @@ function openLightbox(idx) {
     if(lightboxPhotos.length === 0) return; lightboxIndex = lightboxPhotos.findIndex(p => p.wIdx === idx); if(lightboxIndex === -1) lightboxIndex = 0;
     if(activeViewerOverlay) activeViewerOverlay.remove();
     activeViewerOverlay = document.createElement('div'); activeViewerOverlay.className = 'fixed inset-0 bg-black flex items-center justify-center z-[9999] opacity-0 transition-opacity duration-300 select-none';
-    activeViewerOverlay.innerHTML = `<div class="relative w-full h-full flex items-center justify-center overflow-hidden p-2 sm:p-8" id="lbImageContainer"><img id="lbImg" src="" class="max-h-full max-w-full object-contain transition-transform duration-300 rounded-2xl"></div><button class='absolute top-4 right-4 sm:top-6 sm:right-6 bg-slate-800/80 hover:bg-slate-700 text-white w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full closeViewer shadow-lg z-[100] transition-colors'><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button><button class="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 bg-slate-900/60 hover:bg-slate-800 text-white w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center rounded-full cursor-pointer z-[100] transition-colors hidden sm:flex shadow-lg" id="lbPrev"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg></button><button class="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 bg-slate-900/60 hover:bg-slate-800 text-white w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center rounded-full cursor-pointer z-[100] transition-colors hidden sm:flex shadow-lg" id="lbNext"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg></button><div class="absolute bottom-10 sm:bottom-12 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-xl border border-white/20 text-white px-6 py-2 sm:px-8 sm:py-3 rounded-full shadow-2xl pointer-events-none z-[100]"><div class="text-sm sm:text-lg font-bold tracking-wide whitespace-nowrap" id="lbWM">Week X • Y kg</div></div>`;
+    activeViewerOverlay.innerHTML = `<div class="relative w-full h-full flex items-center justify-center overflow-hidden p-2 sm:p-8" id="lbImageContainer"><img id="lbImg" src="" class="max-h-full max-w-full object-contain transition-transform duration-300 rounded-2xl"></div><button class='absolute top-4 right-4 sm:top-6 sm:right-6 bg-slate-800/80 hover:bg-slate-700 text-white w-10 h-10 sm:w-12 h-12 flex items-center justify-center rounded-full closeViewer shadow-lg z-[100] transition-colors'><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button><button class="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 bg-slate-900/60 hover:bg-slate-800 text-white w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center rounded-full cursor-pointer z-[100] transition-colors hidden sm:flex shadow-lg" id="lbPrev"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg></button><button class="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 bg-slate-900/60 hover:bg-slate-800 text-white w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center rounded-full cursor-pointer z-[100] transition-colors hidden sm:flex shadow-lg" id="lbNext"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-8 sm:w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg></button><div class="absolute bottom-10 sm:bottom-12 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-xl border border-white/20 text-white px-6 py-2 sm:px-8 sm:py-3 rounded-full shadow-2xl pointer-events-none z-[100]"><div class="text-sm sm:text-lg font-bold tracking-wide whitespace-nowrap" id="lbWM">Week X • Y kg</div></div>`;
     document.body.appendChild(activeViewerOverlay); updateLightbox(); requestAnimationFrame(() => activeViewerOverlay.classList.remove('opacity-0'));
     
     activeViewerOverlay.querySelector('#lbPrev').onclick = (e) => { e.stopPropagation(); if(lightboxIndex < lightboxPhotos.length - 1) { lightboxIndex++; updateLightbox(); } };
